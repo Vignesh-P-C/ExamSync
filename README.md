@@ -37,6 +37,15 @@ None of this requires changing the algorithms, state, or cost function —
 they already operate on `ProblemInstance`, which is agnostic to where the
 data came from.
 
+## Roadmap / contributing
+
+All remaining work is tracked as [GitHub Issues](../../issues) (#1-#16),
+with dependencies between them noted on each issue — e.g. the frontend MVP
+is blocked on the CSV loader and the stack decision. `CLAUDE.md` §10 keeps
+a standing copy of the full issue list + dependency chain in case GitHub
+itself isn't handy. If you're about to start work, read
+[`CONTRIBUTING.md`](CONTRIBUTING.md) first for the branch/PR workflow.
+
 ## Structure
 
 ```

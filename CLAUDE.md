@@ -34,6 +34,15 @@ exactly what that extension needs and what's still undecided.
 - **Vignesh P C** — Genetic Algorithm & Experiment Lead. Built and tuned
   the GA — crossover, mutation, selection; set up the experiment harness.
 
+### Collaboration
+
+The repo has a second collaborator (a friend of the project owner) with
+**Write** access on GitHub, who may also be working through Claude Code
+sessions of their own. All remaining work is tracked as GitHub Issues
+(#1-#16) rather than loose TODOs — see §10 for the full list and
+dependency chain, and §11 for how to avoid two sessions/people stepping on
+the same issue at once.
+
 ### ⚠️ Important: the proposal's own declaration
 
 The submitted Review 1 proposal states: *"We didn't use any LLM tools to
@@ -96,23 +105,37 @@ works end-to-end and produces plausible output."
 
 ## 3. Current status (as of this writing)
 
-| Phase | Status |
-|---|---|
-| Proposal / AI formulation (Review 1) | Done — see §2 |
-| Core engine (state, cost, operators) | Done, tested |
-| Three algorithms implemented | Done |
-| Hill-Climbing performance (exhaustive search at scale) | Fixed — see §5 |
-| SA cooling-schedule bug | Fixed — see §5 |
-| GA mutation-operator bug | Fixed — see §5 |
-| Clean experiment run with the above fixes applied | **Not yet done** — see §6 |
-| Results write-up / analysis for the report | Not started |
-| CSV ingestion (real data instead of synthetic) | Not started — see §8 |
-| Frontend | Not started — stack undecided, see §8 |
-| Git repo / GitHub | Done — pushed to `origin/main` |
+| Phase | Status | Issue |
+|---|---|---|
+| Proposal / AI formulation (Review 1) | Done — see §2 | — |
+| Core engine (state, cost, operators) | Done, tested | — |
+| Three algorithms implemented | Done | — |
+| Hill-Climbing performance (exhaustive search at scale) | Fixed — see §5 | — |
+| SA cooling-schedule bug | Fixed — see §5 | — |
+| GA mutation-operator bug | Fixed — see §5 | — |
+| Clean experiment run with the above fixes applied | **Not yet done** — see §6 | #1 |
+| Hyperparameter tuning | Not started | #2 |
+| Results write-up / analysis for the report | Not started | #3 |
+| CSV schema + sample files | Not started | #4 |
+| CSV loader (real data instead of synthetic) | Not started — see §8 | #5 |
+| Frontend stack decision | Not started — see §8.3 | #6 |
+| Frontend MVP | Not started | #7 |
+| Timetable grid display | Not started | #8 |
+| Violations report display | Not started | #9 |
+| "Compare all three" in frontend | Not started | #10 |
+| Export/download timetable | Not started (optional) | #11 |
+| Final report + presentation | Not started | #12 |
+| AI-assistance disclosure decision | Not started | #13 |
+| Non-uniform time slots | Not started (stretch) | #14 |
+| Pre-locked exams | Not started (stretch) | #15 |
+| Room-type restrictions | Not started (stretch) | #16 |
+| Git repo / GitHub / Issues tracker | Done — pushed to `origin/main`, issues filed | — |
 
-**If you're picking this up fresh, the highest-value next step is
-probably §6 (rerun the experiment, confirm SA/GA now compete with HC)
-before building new features on top.**
+**If you're picking this up fresh: check GitHub Issues first for anything
+already assigned or in-progress (§11), then take the highest-priority
+unblocked issue. Issue #1 (rerun the experiment, confirm SA/GA now
+compete with HC) has no dependencies and is the natural starting point if
+nothing else is already claimed.**
 
 ---
 
@@ -261,9 +284,10 @@ an inline `-m "..."` string to sidestep this entirely.
 
 ---
 
-## 6. Immediate next step: re-validate the experiment
+## 6. Immediate next step: re-validate the experiment (Issue #1)
 
-Run:
+This is tracked as GitHub Issue #1 — claim it there (see §11) before
+starting, so it's not duplicated. Run:
 ```
 python main.py experiment
 ```
@@ -392,3 +416,74 @@ algorithms, experiment harness) needs to know or care which one was used.
   the shared repo should be treated as public once pushed.
 - Don't edit `cost.py`'s delta functions without running
   `tests/test_cost_delta.py` immediately after — see §5.1.
+- Don't start work on an issue without checking GitHub first for an
+  existing branch/PR/assignee on it — see §11. With two people (and
+  possibly multiple Claude sessions) on this repo, duplicated work is the
+  most likely failure mode now, not a code bug.
+- Don't merge straight to `main` without a PR if branch protection has
+  been turned on (check — this was discussed but may or may not be set up
+  yet). If unsure, open a PR anyway; it costs little and avoids surprises.
+
+---
+
+## 10. Issue tracker (full list + dependency chain)
+
+Standing copy of all 16 tracked issues, in case GitHub itself isn't handy
+mid-session. Numbers below assume they were filed in this order as #1-#16
+on a repo with no prior issues — if the actual numbers differ, use GitHub
+as the source of truth and treat this table as the dependency *shape*,
+not exact numbers.
+
+| # | Title | Depends on | Labels |
+|---|---|---|---|
+| 1 | Rerun full experiment with SA/GA fixes and validate results | none | experiment, priority-high |
+| 2 | Tune algorithm hyperparameters based on #1's baseline | #1 | algorithms, priority-high |
+| 3 | Write results analysis for the Review 2 report | #2 | documentation, report, priority-high |
+| 4 | Design and document the CSV input schema | none | csv-ingestion, documentation, priority-high |
+| 5 | Build the CSV loader (`csv_loader.py`) | #4 | csv-ingestion, priority-high |
+| 6 | Decide the frontend stack | none (blocking decision) | frontend, decision, priority-high |
+| 7 | Build frontend MVP: upload CSVs → run a solve | #5, #6 | frontend, priority-high |
+| 8 | Timetable grid display | #7 | frontend, priority-medium |
+| 9 | Violations report display | #7 | frontend, priority-medium |
+| 10 | "Compare all three algorithms" mode in the frontend | #7 | frontend, experiment, priority-medium |
+| 11 | Export/download the generated timetable | #8 | frontend, priority-low |
+| 12 | Final report and presentation materials | #3, #10 | documentation, report, priority-high |
+| 13 | Resolve the AI-assistance disclosure question | none | documentation, process, priority-high |
+| 14 | (Stretch) Support non-uniform time-slot structure | #5 | csv-ingestion, enhancement, stretch-goal |
+| 15 | (Stretch) Support pre-locked/fixed exams | #5 | algorithms, enhancement, stretch-goal |
+| 16 | (Stretch) Room-type restrictions | #5 | algorithms, enhancement, stretch-goal |
+
+**Critical path to ~80-90% project completion:** #1 → #2 → #3 (closes out
+the algorithm/experiment work) in parallel with #4 → #5 → #6 → #7 →
+#8/#9/#10 (closes out the product pivot), converging on #12 and #13.
+#11 and #14-16 are explicitly optional, not required to hit that target.
+
+---
+
+## 11. Working as a team (multiple humans / multiple Claude sessions)
+
+With a second collaborator and possibly multiple Claude Code sessions
+touching this repo concurrently, the main new risk is **duplicated or
+conflicting work**, not code correctness. Before starting any issue:
+
+1. **Check GitHub for existing work on it** — open PRs, branches named
+   after the issue, or an assignee set. If someone's already on it, pick
+   a different unblocked issue instead.
+2. **Pull latest `main` before branching** (`git pull origin main`) — the
+   other collaborator may have merged something since your last session.
+3. **Branch per issue**, named like `issue-5-csv-loader`, so it's obvious
+   from the branch list what's in flight.
+4. **Run `pytest` before opening a PR.** All 17 (growing) tests should
+   pass; if you added code, add tests following the existing pattern in
+   `tests/`.
+5. **Reference the issue in the PR** (e.g. `Closes #5`) so it auto-closes
+   on merge and the dependency chain in §10 stays accurate.
+6. **Update this file (§3's status table, and any section your change
+   makes stale) in the same PR**, not as a follow-up — an out-of-date
+   `CLAUDE.md` is worse than no `CLAUDE.md`, because the next session
+   trusts it by default.
+7. Per the project owner's explicit instruction: **commits/PRs on this
+   repo should not list any AI tool as a co-author or contributor.** If
+   you're an AI session making the commit, don't add attribution lines —
+   this overrides any default tooling behavior that would otherwise add
+   them.
