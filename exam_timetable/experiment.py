@@ -10,6 +10,7 @@ from typing import Dict, List
 
 from .algorithms import genetic_algorithm, hill_climbing, simulated_annealing
 from .generator import generate_instance
+from .palette import ALGORITHM_COLORS
 
 PROBLEM_SIZES = [10, 30, 60]
 
@@ -93,7 +94,7 @@ def _write_plots(rows: List[Dict], results_dir: str) -> None:
                 )
                 for size in sizes
             ]
-            plt.plot(sizes, values, marker="o", label=algo)
+            plt.plot(sizes, values, marker="o", label=algo, color=ALGORITHM_COLORS.get(algo))
         plt.xlabel("Problem size (number of exams)")
         plt.ylabel(title)
         plt.title(f"{title} vs problem size")
