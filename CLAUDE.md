@@ -114,21 +114,21 @@ works end-to-end and produces plausible output."
 | SA cooling-schedule bug | Fixed — see §5 | — |
 | GA mutation-operator bug | Fixed — see §5 | — |
 | Clean experiment run with the above fixes applied | **Not yet done** — see §6 | #1 |
-| Hyperparameter tuning | Not started | #2 |
-| Results write-up / analysis for the report | Not started | #3 |
-| CSV schema + sample files | Not started | #4 |
-| CSV loader (real data instead of synthetic) | Not started — see §8 | #5 |
-| Frontend stack decision | Not started — see §8.3 | #6 |
-| Frontend MVP | Not started | #7 |
-| Timetable grid display | Not started | #8 |
-| Violations report display | Not started | #9 |
-| "Compare all three" in frontend | Not started | #10 |
-| Export/download timetable | Not started (optional) | #11 |
-| Final report + presentation | Not started | #12 |
-| AI-assistance disclosure decision | Not started | #13 |
-| Non-uniform time slots | Not started (stretch) | #14 |
-| Pre-locked exams | Not started (stretch) | #15 |
-| Room-type restrictions | Not started (stretch) | #16 |
+| Hyperparameter tuning | Not started | #16 |
+| Results write-up / analysis for the report | Not started | #2 |
+| CSV schema + sample files | Done — `docs/csv_schema.md`, `data/sample/` (PR #18) | #3 |
+| CSV loader (real data instead of synthetic) | Done — `csv_loader.py` (PR #18) | #4 |
+| Frontend stack decision | Done — Streamlit, see §8.3 | #5 |
+| Frontend MVP | Done — `app.py` (PR #18) | #6 |
+| Timetable grid display | Done (PR #18) | #7 |
+| Violations report display | Done — `report.py` (PR #18) | #8 |
+| "Compare all three" in frontend | Done (PR #18) | #9 |
+| Export/download timetable | Done — CSV + violations .txt (PR #18) | #10 |
+| Final report + presentation | Not started | #11 |
+| AI-assistance disclosure decision | Not started | #12 |
+| Non-uniform time slots | Not started (stretch) | #13 |
+| Pre-locked exams | Not started (stretch) | #14 |
+| Room-type restrictions | Not started (stretch) | #15 |
 | Git repo / GitHub / Issues tracker | Done — pushed to `origin/main`, issues filed | — |
 
 **If you're picking this up fresh: check GitHub Issues first for anything
@@ -156,6 +156,13 @@ exam_timetable/
   experiment.py     runs all three algorithms on 10/30/60-exam instances,
                     writes results/comparison.csv and results/plots/*.png
   cli.py            argparse entry point (`solve` and `experiment` subcommands)
+  csv_loader.py     load_instance_from_csv(): courses/enrollments/rooms CSVs -> ProblemInstance
+  report.py         violations report (which hard/soft violations remain) for the frontend
+  palette.py        one fixed colour per algorithm, shared by plots and the frontend
+app.py              Streamlit frontend (`streamlit run app.py`)
+data/sample/        sample courses/enrollments/rooms CSVs (schedulable on the default 5x3 grid)
+docs/csv_schema.md  the CSV input schema
+scripts/make_sample_data.py   regenerates data/sample/enrollments.csv (seeded)
 tests/
   test_cost.py          hand-crafted scenarios for each violation type
   test_cost_delta.py    property test: delta_shift/delta_swap must exactly
@@ -167,6 +174,8 @@ tests/
   test_generator.py      generated instances are well-formed and reproducible
   test_algorithms.py     smoke tests: each algorithm runs, never regresses
                         (history is non-increasing), returns a valid assignment
+  test_csv_loader.py     CSV loader: valid input and each rejected-input case
+  test_sample_data.py    the shipped sample is schedulable on the default grid
 main.py             `python main.py <solve|experiment> ...`
 ```
 
@@ -312,7 +321,7 @@ response to that.
 ## 7. Running things
 
 ```bash
-pip install -r requirements.txt     # matplotlib, pytest
+pip install -r requirements.txt     # matplotlib, pytest, streamlit
 pytest                               # 17 tests, should all pass in ~1-2s
                                       # (test_algorithms.py's SA case takes
                                       # longer than it used to post-§5.2 —
@@ -323,6 +332,8 @@ python main.py solve --algorithm sa --exams 30
 python main.py solve --algorithm ga --exams 60
 
 python main.py experiment            # full comparison, writes results/
+
+streamlit run app.py                 # the frontend (upload CSVs or use demo data)
 ```
 
 `py` is the working Python launcher on this Windows machine (plain
@@ -332,7 +343,7 @@ alias.
 
 ---
 
-## 8. The pivot: real data + frontend (planned, not built)
+## 8. The pivot: real data + frontend (built — PR #18)
 
 The direction, confirmed with the project owner: stop being
 synthetic-data-only and become a tool that takes a real department's data
@@ -369,9 +380,10 @@ invigilator/staff conflicts.
    harness already produces, just computed on the real uploaded instance
    instead of a synthetic one.
 
-### 8.3 Open decision: frontend stack
+### 8.3 Decision: frontend stack — Streamlit
 
-Not yet decided by the project owner. The two options discussed:
+Decided: **Streamlit** (`app.py`, merged in PR #18). The two options that
+were discussed:
 
 - **Streamlit** (recommended default if no strong reason otherwise): a
   single Python process, built-in file upload + dataframe/table + chart
@@ -383,14 +395,13 @@ Not yet decided by the project owner. The two options discussed:
   deploy instead of one. Only worth it if there's a specific reason (e.g.
   wanting this as a portfolio piece beyond the course).
 
-**Do not start building the frontend without confirming this choice** —
-it was asked and not yet answered as of this file being written.
+The full web app option was not pursued.
 
-### 8.4 Implementation sketch once the stack is picked
+### 8.4 Implementation: `csv_loader.py`
 
-A new module, e.g. `exam_timetable/csv_loader.py`, exposing something
-like `load_instance_from_csv(courses_path, enrollments_path, rooms_path,
-days, periods_per_day) -> ProblemInstance`, built the same way
+Implemented as `exam_timetable/csv_loader.py`, exposing
+`load_instance_from_csv(courses_source, enrollments_source, rooms_source,
+days, periods_per_day)`, which returns `(ProblemInstance, labels)`. It is built the same way
 `generator.py`'s `generate_instance()` is, just reading real rows instead
 of sampling them. This is additive — `generator.py` stays for synthetic
 testing/experiments; the CSV loader is a second, parallel way to build a
@@ -429,34 +440,33 @@ algorithms, experiment harness) needs to know or care which one was used.
 ## 10. Issue tracker (full list + dependency chain)
 
 Standing copy of all 16 tracked issues, in case GitHub itself isn't handy
-mid-session. Numbers below assume they were filed in this order as #1-#16
-on a repo with no prior issues — if the actual numbers differ, use GitHub
-as the source of truth and treat this table as the dependency *shape*,
-not exact numbers.
+mid-session. The numbers below match GitHub (an earlier version of this
+table was off by one from #2 onwards); if they ever drift again, GitHub is
+the source of truth and this table is the dependency *shape*.
 
-| # | Title | Depends on | Labels |
-|---|---|---|---|
-| 1 | Rerun full experiment with SA/GA fixes and validate results | none | experiment, priority-high |
-| 2 | Tune algorithm hyperparameters based on #1's baseline | #1 | algorithms, priority-high |
-| 3 | Write results analysis for the Review 2 report | #2 | documentation, report, priority-high |
-| 4 | Design and document the CSV input schema | none | csv-ingestion, documentation, priority-high |
-| 5 | Build the CSV loader (`csv_loader.py`) | #4 | csv-ingestion, priority-high |
-| 6 | Decide the frontend stack | none (blocking decision) | frontend, decision, priority-high |
-| 7 | Build frontend MVP: upload CSVs → run a solve | #5, #6 | frontend, priority-high |
-| 8 | Timetable grid display | #7 | frontend, priority-medium |
-| 9 | Violations report display | #7 | frontend, priority-medium |
-| 10 | "Compare all three algorithms" mode in the frontend | #7 | frontend, experiment, priority-medium |
-| 11 | Export/download the generated timetable | #8 | frontend, priority-low |
-| 12 | Final report and presentation materials | #3, #10 | documentation, report, priority-high |
-| 13 | Resolve the AI-assistance disclosure question | none | documentation, process, priority-high |
-| 14 | (Stretch) Support non-uniform time-slot structure | #5 | csv-ingestion, enhancement, stretch-goal |
-| 15 | (Stretch) Support pre-locked/fixed exams | #5 | algorithms, enhancement, stretch-goal |
-| 16 | (Stretch) Room-type restrictions | #5 | algorithms, enhancement, stretch-goal |
+| # | Title | Depends on | Labels | Status |
+|---|---|---|---|---|
+| 1 | Rerun full experiment with SA/GA fixes and validate results | none | experiment, priority-high | open |
+| 2 | Write results analysis for the Review 2 report | #16 | documentation, report, priority-high | open |
+| 3 | Design and document the CSV input schema | none | csv-ingestion, documentation, priority-high | done (PR #18) |
+| 4 | Build the CSV loader (`csv_loader.py`) | #3 | csv-ingestion, priority-high | done (PR #18) |
+| 5 | Decide the frontend stack | none (blocking decision) | frontend, decision, priority-high | done (Streamlit) |
+| 6 | Build frontend MVP: upload CSVs -> run a solve | #4, #5 | frontend, priority-high | done (PR #18) |
+| 7 | Timetable grid display | #6 | frontend, priority-medium | done (PR #18) |
+| 8 | Violations report display | #6 | frontend, priority-medium | done (PR #18) |
+| 9 | Compare all three algorithms mode in the frontend | #6 | frontend, experiment, priority-medium | done (PR #18) |
+| 10 | Export/download the generated timetable | #7 | frontend, priority-low | done (PR #18) |
+| 11 | Final report and presentation materials | #2, #9 | documentation, report, priority-high | open |
+| 12 | Resolve the AI-assistance disclosure question | none | documentation, process, priority-high | open |
+| 13 | (Stretch) Support non-uniform time-slot structure | #4 | csv-ingestion, enhancement, stretch-goal | open |
+| 14 | (Stretch) Support pre-locked/fixed exams | #4 | algorithms, enhancement, stretch-goal | open |
+| 15 | (Stretch) Room-type restrictions | #4 | algorithms, enhancement, stretch-goal | open |
+| 16 | Tune algorithm hyperparameters based on #1's baseline | #1 | algorithms, priority-high | open |
 
-**Critical path to ~80-90% project completion:** #1 → #2 → #3 (closes out
-the algorithm/experiment work) in parallel with #4 → #5 → #6 → #7 →
-#8/#9/#10 (closes out the product pivot), converging on #12 and #13.
-#11 and #14-16 are explicitly optional, not required to hit that target.
+**Critical path to ~80-90% project completion:** #1 -> #16 -> #2 (closes out
+the algorithm/experiment work); the product pivot (#3-#10) is done, so what
+remains converges on #11 and #12. #13-15 are explicitly optional, not
+required to hit that target.
 
 ---
 

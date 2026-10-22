@@ -2,7 +2,7 @@
 
 `cost.evaluate()` gives counts (hard/soft) for scoring; this module walks
 the same assignment and produces descriptions of *which* violations
-remain, for display in the frontend (CLAUDE.md §8.2 / Issue #9) - e.g.
+remain, for display in the frontend (CLAUDE.md §8.2 / Issue #8) - e.g.
 "Room R3 at Day 2 Period 1 is double-booked by CSE101 and CSE107" rather
 than just "hard=1".
 """

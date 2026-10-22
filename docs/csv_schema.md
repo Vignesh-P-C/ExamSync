@@ -1,6 +1,6 @@
 # CSV input schema
 
-(Issue #4.) Three files, all plain CSV with a header row. Sample files
+(Issue #3.) Three files, all plain CSV with a header row. Sample files
 that satisfy this schema are in [`data/sample/`](../data/sample/) and
 load cleanly in the frontend (`streamlit run app.py`, "Upload CSVs").
 
@@ -43,7 +43,22 @@ frontend's own default is 5 days x 3 periods/day, labeled "Morning
 shown throughout the timetable/violations display instead of generic
 "Period 1/2/3" whenever the label count matches `periods_per_day`). This
 assumes a uniform grid of slots; non-uniform slot structures are a
-stretch goal (Issue #14) not currently supported.
+stretch goal (Issue #13) not currently supported.
+
+## Choosing the grid size
+
+The grid must have at least as many slots as the data needs, or hard
+violations are unavoidable no matter which algorithm you run. The binding
+number is how many time slots the conflict graph needs: two exams that share
+a student can't share a slot. A department where every student takes
+courses from many different programmes needs many slots; one where students
+mostly stay within a programme needs few. As a check, if `days x
+periods_per_day` is smaller than the size of the largest group of exams
+that pairwise share a student, a clash-free timetable can't exist.
+
+The bundled sample (`data/sample/`) is 30 courses in 5 programmes, with a
+few cross-programme electives. It needs 8 slots and fits the default 5 x 3
+grid. `python scripts/make_sample_data.py` regenerates its enrollments.
 
 ## Validation
 
@@ -59,9 +74,9 @@ the loader.
 Per CLAUDE.md §8.1 — would need changes to `models.py`/`cost.py`:
 - Exams with different durations (every exam currently occupies exactly
   one slot).
-- Pre-locked/fixed exams (Issue #15, stretch).
+- Pre-locked/fixed exams (Issue #14, stretch).
 - Room-type restrictions, e.g. a course needing a lab specifically rather
-  than any sufficiently large room (Issue #16, stretch).
+  than any sufficiently large room (Issue #15, stretch).
 - Invigilator/staff conflicts.
 
 Student and course *display* names beyond what's listed above (e.g. a

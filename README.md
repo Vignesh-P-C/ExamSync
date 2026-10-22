@@ -18,30 +18,27 @@ open design decisions — read that first if you're picking this project up.
   algorithms, running against **synthetically generated** problem instances.
 - An experiment harness comparing all three algorithms across 10/30/60-exam
   synthetic instances, producing a CSV + plots.
+- **CSV ingestion**: `exam_timetable/csv_loader.py` builds a
+  `ProblemInstance` from three CSVs (`courses.csv`, `enrollments.csv`,
+  `rooms.csv`) plus a days x periods grid. The format and validation rules
+  are in [`docs/csv_schema.md`](docs/csv_schema.md); sample files are in
+  [`data/sample/`](data/sample/).
+- **A Streamlit frontend** (`app.py`): upload the CSVs (or use synthetic demo
+  data), run one algorithm or compare all three, and get a timetable grid, a
+  violations report, and CSV / .txt downloads.
 
-## What's planned, not yet built
+## What's not built yet
 
-- **CSV ingestion**, to build a `ProblemInstance` from real data instead of
-  `generator.py`'s synthetic one. Planned input files:
-  - `courses.csv` — `course_id`, `course_name`
-  - `enrollments.csv` — `student_id`, `course_id` (one row per student-course
-    pair — this is what drives every student-side conflict check)
-  - `rooms.csv` — `room_id`, `capacity`
-  - exam period structure (days × periods/day) — likely a simple config
-    rather than a file, unless slots turn out to be non-uniform
-- **A frontend** to upload those CSVs, trigger a solve, and display the
-  resulting timetable (plus a violations report, and optionally the
-  three-algorithm comparison). Stack not yet decided — see `CLAUDE.md`.
+- Non-uniform time-slot structures, pre-locked exams and room-type
+  restrictions (stretch goals, tracked as GitHub Issues).
+- Hyperparameter tuning and the results write-up for the report.
 
-None of this requires changing the algorithms, state, or cost function —
-they already operate on `ProblemInstance`, which is agnostic to where the
-data came from.
+See [`CLAUDE.md`](CLAUDE.md) for the full status table.
 
 ## Roadmap / contributing
 
 All remaining work is tracked as [GitHub Issues](../../issues) (#1-#16),
-with dependencies between them noted on each issue — e.g. the frontend MVP
-is blocked on the CSV loader and the stack decision. `CLAUDE.md` §10 keeps
+with dependencies between them noted on each issue. `CLAUDE.md` §10 keeps
 a standing copy of the full issue list + dependency chain in case GitHub
 itself isn't handy. If you're about to start work, read
 [`CONTRIBUTING.md`](CONTRIBUTING.md) first for the branch/PR workflow.
@@ -64,7 +61,15 @@ exam_timetable/
   experiment.py     runs all three algorithms on 10/30/60-exam instances,
                     writes results/comparison.csv and results/plots/*.png
   cli.py            argparse entry point
-tests/              unit tests for cost function, state ops, generator, algorithms
+  csv_loader.py     CSV files -> ProblemInstance
+  report.py         violations report for the frontend
+  palette.py        one fixed colour per algorithm (plots + frontend)
+app.py              Streamlit frontend
+data/sample/        sample CSVs (schedulable on the default 5x3 grid)
+docs/csv_schema.md  CSV input schema
+scripts/            make_sample_data.py regenerates the sample enrollments
+tests/              unit tests for cost function, state ops, generator,
+                    algorithms, CSV loader, and the sample data
 main.py             `python main.py ...`
 ```
 
@@ -90,6 +95,15 @@ Run the full comparison (all three algorithms x 10/30/60 exams), producing
 ```
 python main.py experiment
 ```
+
+Launch the frontend:
+
+```
+streamlit run app.py
+```
+
+Choose "Upload CSVs" and use the files in `data/sample/`, or pick the
+synthetic demo data.
 
 ## Tests
 
